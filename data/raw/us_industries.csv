@@ -1,0 +1,75 @@
+Industry,Sector
+Industrial Products,Industrials
+Business Services,Industrials
+Engineering & Construction,Industrials
+Waste Management,Industrials
+Industrial Distribution,Industrials
+Airlines,Industrials
+Consulting & Outsourcing,Industrials
+Aerospace & Defense,Industrials
+Farm & Construction Machinery,Industrials
+Transportation & Logistics,Industrials
+Employment Services,Industrials
+Truck Manufacturing,Industrials
+Conglomerates,Industrials
+Computer Hardware,Technology
+Online Media,Technology
+Application Software,Technology
+Semiconductors,Technology
+Communication Equipment,Technology
+Retail - Defensive,Consumer Defensive
+Consumer Packaged Goods,Consumer Defensive
+Tobacco Products,Consumer Defensive
+Beverages - Alcoholic,Consumer Defensive
+Beverages - Non-Alcoholic,Consumer Defensive
+Education,Consumer Defensive
+Entertainment,Consumer Cyclical
+Retail - Apparel & Specialty,Consumer Cyclical
+Restaurants,Consumer Cyclical
+Manufacturing - Apparel & Furniture,Consumer Cyclical
+Autos,Consumer Cyclical
+Advertising & Marketing Services,Consumer Cyclical
+Homebuilding & Construction,Consumer Cyclical
+Travel & Leisure,Consumer Cyclical
+Packaging & Containers,Consumer Cyclical
+Personal Services,Consumer Cyclical
+Publishing,Consumer Cyclical
+Asset Management,Financial Services
+Banks,Financial Services
+"Brokers, Exchanges & Other",Financial Services
+Insurance - Life,Financial Services
+Insurance,Financial Services
+Insurance - Property & Casualty,Financial Services
+Credit Services,Financial Services
+Insurance - Specialty,Financial Services
+Utilities - Regulated,Utilities
+Utilities - Independent Power Producers,Utilities
+Medical Diagnostics & Research,Healthcare
+Biotechnology,Healthcare
+Medical Instruments & Equipment,Healthcare
+Medical Devices,Healthcare
+Drug Manufacturers,Healthcare
+Health Care Plans,Healthcare
+Health Care Providers,Healthcare
+Medical Distribution,Healthcare
+Oil & Gas - Refining & Marketing,Energy
+Oil & Gas - E&P,Energy
+Oil & Gas - Midstream,Energy
+Oil & Gas - Services,Energy
+Oil & Gas - Integrated,Energy
+Oil & Gas - Drilling,Energy
+Alternative Energy Sources & Other,Energy
+Communication Services,Business Services
+Consulting,Business Services
+HR & Staffing,Business Services
+Other,Business Services
+REITs,Real Estate
+Real Estate Services,Real Estate
+Chemicals,Basic Materials
+Forest Products,Basic Materials
+Agriculture,Basic Materials
+Metals & Mining,Basic Materials
+Building Materials,Basic Materials
+Coal,Basic Materials
+Steel,Basic Materials
+Diversified Holdings,Other
