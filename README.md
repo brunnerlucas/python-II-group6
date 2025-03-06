@@ -11,7 +11,7 @@
 
 ### 🟡 `dev` (Integration & Testing)
 - This is the **main working branch** where all feature branches are merged before going to `main`.
-- Team members should **branch off `dev`** and create **feature branches** i.e. feature/rf_model 
+- Team members should **branch off `dev`** and create **feature branches** i.e. feature/rf_model .
 
 ## 🌱 Feature Branches (One per Task)
 Each team member should create a **feature branch** off `dev`, named descriptively:
