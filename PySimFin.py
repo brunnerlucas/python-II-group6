@@ -54,18 +54,20 @@ class PySimFin:
             logging.warning(f"No data found or format is unexpected for {ticker}")
             return pd.DataFrame()
 
-            
-    def get_financial_statement(self, ticker: str, statements: str, period: str= "FY", fyear=None):
+
+    def get_financial_statement(self, ticker: str, statements: str, period: str = "FY", start: str = None, end: str = None):
         url = self.url + "companies/statements/compact"
         headers = self.__create_headers()
+        
         params = {
             "ticker": ticker,
             "statements": statements,
             "period": period
-        }      
-        
-        if fyear:
-            params["fyear"]=fyear
+        }
+        if start:
+            params["start"] = start + "-01-01"
+        if end:
+            params["end"] = end + "-12-31"
     
         logging.info(f"Requesting Financial Statement: {url} with params: {params}")
     
@@ -76,15 +78,17 @@ class PySimFin:
             response.raise_for_status()
     
             data = response.json()
-            if isinstance(data, list) and "statements" in data[0]:
+            if isinstance(data, list) and len(data) > 0 and "statements" in data[0] and len(data[0]["statements"]) > 0:
                 statement = data[0]["statements"][0]
                 return pd.DataFrame(statement["data"], columns=statement["columns"])
             else:
-                logging.warning(f"No financial statement data found for {ticker}.")
+                logging.warning(f"No financial statement data found or available for '{ticker}'.")
                 return pd.DataFrame()
+    
         except requests.exceptions.RequestException as e:
             logging.error(f"Error fetching financial statements: {e}")
             return pd.DataFrame()
+
 
     def get_general_data(self, ticker: str):
         url = self.url + "companies/general/compact"
