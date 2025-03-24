@@ -1,6 +1,7 @@
 import streamlit as st
 from PySimFin import PySimFin
 import requests
+import yfinance as yf
 
 st.title("General Company Information")
 
@@ -10,14 +11,36 @@ ticker = st.text_input("Enter Stock Ticker (e.g., AAPL)", value="AAPL")
 
 if st.button("Get Company Info"):
     df = api.get_general_data(ticker)
+
     if not df.empty:
-        # Fetch logo using Clearbit Logo API based on company name
         company_name = df['name'].iloc[0]
-        company_name_cleaned = company_name.replace('INC', '').replace('CORP', '').replace(' ', '').lower()
-        logo_url = f"https://logo.clearbit.com/{company_name_cleaned}.com"
-        st.image(logo_url, width=100)
-        st.subheader("Name:")
-        st.write(df['name'].iloc[0])
+        st.subheader(f"Company: {company_name}")
+
+        # --- Try to get domain using yfinance ---
+        try:
+            company_yf = yf.Ticker(ticker)
+            domain = company_yf.info.get("website", None)
+        except Exception as e:
+            domain = None
+
+        # --- If we get a domain, try to display the logo ---
+        logo_displayed = False
+        if domain and isinstance(domain, str):
+            domain_base = domain.replace("https://", "").replace("http://", "").split("/")[0]
+            logo_url = f"https://logo.clearbit.com/{domain_base}"
+
+            try:
+                response = requests.get(logo_url, timeout=3)
+                if response.status_code == 200:
+                    st.image(logo_url, width=100)
+                    logo_displayed = True
+            except:
+                pass
+
+        if not logo_displayed:
+            st.info("🔍 Logo not found using company domain.")
+
+        # --- Display general info ---
         st.subheader("Company Description:")
         st.write(df['companyDescription'].iloc[0])
         st.subheader("Industry:")
