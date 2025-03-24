@@ -1,4 +1,7 @@
 import streamlit as st
+from PySimFin import PySimFin
+
+api = PySimFin()
 
 st.set_page_config(page_title="SimFin Stock Explorer", layout="wide")
 
@@ -12,5 +15,15 @@ Navigate using the sidebar to:
 - Explore share price history
 - Access financial statements
 """)
+
+st.write("Hot Stocks")
+
+df = api.companies()
+
+df.dropna(inplace=True)
+
+df = df[['name', 'ticker', 'industryName','sectorName']]
+
+st.dataframe(df.head(15))
 
 st.info("Developed for the Automated Trading System Project")
