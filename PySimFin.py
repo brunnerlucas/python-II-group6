@@ -13,7 +13,7 @@ class PySimFin:
     def __init__(self):
         self.url = "https://backend.simfin.com/api/v3/" 
         self.__load_dotenv()
-        self.__token = os.getenv("API_KEY")
+        self.__token = "122148ca-24f4-4ee5-a10e-4d347614ea86"
 
     def __load_dotenv(self):
         load_dotenv()
@@ -115,8 +115,29 @@ class PySimFin:
         except requests.exceptions.RequestException as e:
             logging.error(f"Error fetching financial statements: {e}")
             return pd.DataFrame()
-
-
+        
+    def companies(self):
+        url = self.url + "companies/list"
+        headers = self.__create_headers()
+        params = {}
+    
+        logging.info(f"Requesting: {url} with params: {params}")
+    
+        response = requests.get(url, headers=headers, params=params)
+        print(f"Full URL: {response.url}")
+        print(f"Response Status: {response.status_code}")
+    
+        response.raise_for_status()
+    
+        data = response.json()
+        df = pd.DataFrame(data)
+        #df = pd.DataFrame(data[0]["data"], columns=data[0]["columns"])
+        """if isinstance(data, list) and len(data) > 0 and "data" in data[0] and "columns" in data[0]:
+            df = pd.DataFrame(data[0]["data"], columns=data[0]["columns"])
+            return df
+        else:
+            logging.warning(f"No data found or format is unexpected for companies.")"""
+        return df
 
 # Example usage
 if __name__ == "__main__":
@@ -125,7 +146,8 @@ if __name__ == "__main__":
     #df_prices = simfin_api.get_share_prices("AAPL", "2024-12-01", "2024-12-31") 
     #print(df_prices)
 
-    df_financials = simfin_api.get_financial_statement("AAPL","Derived","FY","2022")
+    df_financials = simfin_api.companies()
+    print(df_financials.head())
     #print(df_financials.head())
 
     #df_general=simfin_api.get_general_data("AAPL")
