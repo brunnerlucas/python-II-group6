@@ -17,6 +17,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import xgboost as xgb
 
+import os
+import joblib
+import xgboost as xgb
+
+
 class PySimFin:
     def __init__(self):
         self.url = "https://backend.simfin.com/api/v3/" 
@@ -150,92 +155,94 @@ class PySimFin:
 
 
     def train_xgboost_model(self, data, last_date):
-        # Filter the DataFrame to get the last 60 days of data
+        from pathlib import Path
+
+        # Create model path
+        model_dir = "models"
+        Path(model_dir).mkdir(exist_ok=True)
+        #last_date_str = pd.to_datetime(last_date).strftime("%Y-%m-%d")
+        ticker_symbol = data['Ticker'].iloc[0]
+        model_path = os.path.join(model_dir, f"{ticker_symbol}_latest_xgb.pkl")
+
+
+        # === Preprocess data ===
         data.rename(columns={'Adjusted Closing Price': 'Close'}, inplace=True)
-        data = data[['Close','Date']]
+        data = data[['Close', 'Date']]
         data['Date'] = pd.to_datetime(data['Date'])
         data = data.set_index(['Date'])
         last_date = pd.to_datetime(last_date)
-        sixty_days_prior = last_date - pd.DateOffset(days=60)
+        sixty_days_prior = last_date - pd.DateOffset(days=100)
         data = data[(data.index.get_level_values('Date') > sixty_days_prior) & (data.index.get_level_values('Date') <= last_date)]
 
-        # Rename close to target
         data = data.rename(columns={'Close': 'target'})
-
         data_filtered = data.copy()
 
-        
-        # Extract useful features from the Date column
-        data_filtered['year'] = data_filtered.index.get_level_values('Date').year
-        data_filtered['month'] = data_filtered.index.get_level_values('Date').month
-        data_filtered['day'] = data_filtered.index.get_level_values('Date').day
-        data_filtered['dayofweek'] = data_filtered.index.get_level_values('Date').dayofweek
+        # Feature engineering
+        data_filtered['year'] = data_filtered.index.year
+        data_filtered['month'] = data_filtered.index.month
+        data_filtered['day'] = data_filtered.index.day
+        data_filtered['dayofweek'] = data_filtered.index.dayofweek
         data_filtered['lag1'] = data_filtered['target'].shift(1)
         data_filtered['log_return'] = np.log(data_filtered['target'] / data_filtered['target'].shift(1))
-
-        # Moving Averages (Trend Indicators)
         data_filtered['MA_10'] = data_filtered['target'].rolling(10).mean()
         data_filtered['MA_50'] = data_filtered['target'].rolling(50).mean()
-
-        # Volatility Indicator
         data_filtered['Volatility'] = data['target'].rolling(10).std()
 
-        # Relative Strength Index (Momentum Indicator)
         def compute_rsi(series, window=14):
             delta = series.diff()
             gain = delta.where(delta > 0, 0).rolling(window=window).mean()
             loss = -delta.where(delta < 0, 0).rolling(window=window).mean()
-            rs = gain / (loss + 1e-10)  # Avoid division by zero
+            rs = gain / (loss + 1e-10)
             return 100 - (100 / (1 + rs))
 
         data_filtered['RSI'] = compute_rsi(data_filtered['target'])
-
-        # Bollinger Bands (Market Volatility)
         data_filtered['BB_Upper'] = data_filtered['MA_10'] + (2 * data_filtered['Volatility'])
         data_filtered['BB_Lower'] = data_filtered['MA_10'] - (2 * data_filtered['Volatility'])
 
-        # Prepare the data
-        X = data_filtered.drop(columns=['target'])
-        y = data_filtered['target']
-        
-        # Split the data into training and testing sets
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        
-        # Train an XGBoost model
-        model = xgb.XGBRegressor(objective='reg:squarederror', n_estimators=100, learning_rate=0.1, max_depth=5)
-        model.fit(X_train, y_train)
-        
-        # Make predictions
-        y_train_pred = model.predict(X_train)
-        y_test_pred = model.predict(X_test)
-        
-        # Evaluate the model
-        train_mse = mean_squared_error(y_train, y_train_pred)
-        test_mse = mean_squared_error(y_test, y_test_pred)
-        
-        # Predict the next 15 days
-        future_dates = pd.date_range(start=last_date + pd.DateOffset(days=1), periods=1, freq='B')  # Business days
-        future_data = pd.DataFrame(index=pd.MultiIndex.from_product([ future_dates], names=[ 'Date']))
+        # Drop rows with NaNs
+        data_filtered.dropna(inplace=True)
+
+        if len(data_filtered) < 10:
+            raise ValueError("Not enough data after preprocessing to train or predict.")
+
+        # === Load or Train model ===
+        if os.path.exists(model_path):
+            model = joblib.load(model_path)
+        else:
+            X = data_filtered.drop(columns=['target'])
+            y = data_filtered['target']
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+            model = xgb.XGBRegressor(objective='reg:squarederror', n_estimators=100, learning_rate=0.1, max_depth=5)
+            model.fit(X_train, y_train)
+
+            joblib.dump(model, model_path)
+
+        # === Predict next day ===
+        future_dates = pd.date_range(start=last_date + pd.DateOffset(days=1), periods=1, freq='B')
+        future_data = pd.DataFrame(index=pd.MultiIndex.from_product([future_dates], names=['Date']))
+
         future_data['year'] = future_data.index.get_level_values('Date').year
         future_data['month'] = future_data.index.get_level_values('Date').month
         future_data['day'] = future_data.index.get_level_values('Date').day
         future_data['dayofweek'] = future_data.index.get_level_values('Date').dayofweek
-        future_data['lag1'] = data_filtered['target'].iloc[-1]
-        future_data['log_return'] = data_filtered['log_return'].iloc[-1]
-        future_data['MA_10'] = data_filtered['MA_10'].iloc[-1]
-        future_data['MA_50'] = data_filtered['MA_50'].iloc[-1]
-        future_data['Volatility'] = data_filtered['Volatility'].iloc[-1]
-        future_data['RSI'] = data_filtered['RSI'].iloc[-1]
-        future_data['BB_Upper'] = data_filtered['BB_Upper'].iloc[-1]
-        future_data['BB_Lower'] = data_filtered['BB_Lower'].iloc[-1]
 
-        
-        
+        last_row = data_filtered.iloc[-1]
+        future_data['lag1'] = last_row['target']
+        future_data['log_return'] = last_row['log_return']
+        future_data['MA_10'] = last_row['MA_10']
+        future_data['MA_50'] = last_row['MA_50']
+        future_data['Volatility'] = last_row['Volatility']
+        future_data['RSI'] = last_row['RSI']
+        future_data['BB_Upper'] = last_row['BB_Upper']
+        future_data['BB_Lower'] = last_row['BB_Lower']
+
         future_predictions = model.predict(future_data)
         future_predictions_df = pd.DataFrame({'Date': future_dates, 'Predicted_Close': future_predictions})
-        
+
         return future_predictions_df
-    
+
+        
 
     def simulate_hybrid_hold_strategy(self, df, model_func, ticker, initial_cash=10000,
                                     buy_threshold=0.005, sell_threshold=0.03,
