@@ -7,3 +7,4 @@ requests
 yfinance
 scikit-learn
 xgboost
+lxml
