@@ -28,6 +28,7 @@ elif st.button("Predict Next Close Price"):
     #getting the data for the prediction
     df = api.get_share_prices(ticker, start=start_str, end=end_str)
 
+
     if df.empty:
         st.warning("No data found for this ticker.")
         st.stop()
@@ -89,10 +90,35 @@ elif st.button("Predict Next Close Price"):
     st.plotly_chart(fig, use_container_width=True)
 
 
-    strategy_df = api.simulate_trading_strategy(df, api.train_xgboost_model, ticker)
+    # Run simulation
+    strategy_df, trade_log = api.simulate_hybrid_hold_strategy(df, api.train_xgboost_model, ticker)
 
-    st.subheader("📈 Strategy Equity Curve")
-    st.line_chart(strategy_df.set_index("Date")["Capital"])
+    if not strategy_df.empty:
+        st.subheader("📈 Strategy Performance")
+        st.line_chart(strategy_df.set_index("Date")["Capital"])
 
-    total_return = strategy_df['Capital'].iloc[-1] - 10000
-    st.metric("💰 Total Profit", f"${total_return:.2f}")
+        final_capital = strategy_df['Capital'].iloc[-1]
+        st.metric("💰 Final Capital", f"${final_capital:.2f}")
+        st.metric("📈 Total Return", f"${final_capital - 10000:.2f}")
+
+        # Strategy Explanation
+        with st.expander("📖 Strategy Explanation"):
+            st.markdown(f"""
+            **Strategy Overview:**
+
+            - Predicts next day's closing price using an XGBoost model.
+            - **Buys** if the model expects a gain of more than **0.5%** from today's close.
+            - **Sells** part of the position if the next day's close drops more than **3%** compared to today.
+            - Keeps remaining capital invested for long-term exposure.
+            - Starts with **$10,000** in cash.
+
+            ---
+            """)
+
+            st.markdown("**📋 Trade Log:**")
+            if trade_log:
+                for log in trade_log:
+                    st.markdown(f"- {log}")
+            else:
+                st.markdown("_No trades were triggered in this period._")
+

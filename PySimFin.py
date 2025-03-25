@@ -237,39 +237,65 @@ class PySimFin:
         return future_predictions_df
     
 
-    def simulate_trading_strategy(self, df, model_func, ticker, initial_cash=10000):
+    def simulate_hybrid_hold_strategy(self, df, model_func, ticker, initial_cash=10000,
+                                    buy_threshold=0.005, sell_threshold=0.03,
+                                    trade_fraction=0.5):
         cash = initial_cash
-        positions = 0
+        shares = 0
         equity_curve = []
+        trade_log = []
 
         df = df.copy()
         df = df.sort_values("Date").reset_index(drop=True)
+        df['Date'] = pd.to_datetime(df['Date'])
 
-        for i in range(len(df) - 1):
-            current_day = df.loc[i, "Date"]
-            next_day = df.loc[i + 1, "Date"]
+        for i in range(60, len(df) - 1):  # start after 60 days
+            today = df.loc[i, 'Date']
+            tomorrow = df.loc[i + 1, 'Date']
+            today_close = df.loc[i, 'Close']
+            tomorrow_close = df.loc[i + 1, 'Close']
 
-            # Slice data up to current_day to simulate real-time
-            history_until_now = df[df["Date"] <= current_day].copy()
+            train_data = df.iloc[i-60:i+1].copy()
 
             try:
-                prediction_df = model_func(history_until_now, current_day)
-                predicted_close = prediction_df["Predicted_Close"].values[0]
+                prediction_df = model_func(train_data, today)
+                predicted_close = prediction_df['Predicted_Close'].values[0]
             except:
-                continue  # skip if not enough data
+                continue
 
-            today_close = df.loc[i, "Close"]
-            tomorrow_close = df.loc[i + 1, "Close"]
+            pct_diff = (predicted_close - today_close) / today_close
+            action = None
 
-            # If predicted price > today's close → Buy
-            if predicted_close > today_close:
-                shares_bought = cash // today_close
-                cash -= shares_bought * today_close
-                cash += shares_bought * tomorrow_close  # Sell next day
+            # 🟢 Buy condition
+            if pct_diff > buy_threshold:
+                buy_amount = cash * trade_fraction
+                qty = int(buy_amount // today_close)
+                cost = qty * today_close
+                if qty > 0:
+                    cash -= cost
+                    shares += qty
+                    action = f"Bought {qty} shares at ${today_close:.2f} on {today.date()} (predicted ${predicted_close:.2f})"
 
-            equity_curve.append({"Date": next_day, "Capital": cash})
+            # 🔴 Sell condition
+            elif (tomorrow_close - today_close) / today_close < -sell_threshold:
+                qty = int(shares * trade_fraction)
+                revenue = qty * tomorrow_close
+                if qty > 0:
+                    cash += revenue
+                    shares -= qty
+                    action = f"Sold {qty} shares at ${tomorrow_close:.2f} on {tomorrow.date()} (drop after ${today_close:.2f})"
 
-        return pd.DataFrame(equity_curve)
+            # Track capital
+            total_value = cash + (shares * tomorrow_close)
+            equity_curve.append({'Date': tomorrow, 'Capital': total_value})
+
+            # Add to log
+            if action:
+                trade_log.append(action)
+
+        return pd.DataFrame(equity_curve), trade_log
+
+
 
 
 # Example usage
