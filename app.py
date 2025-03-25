@@ -81,8 +81,15 @@ df = api.companies()
 df.dropna(inplace=True)
 df = df[df['ticker'].isin(['TSLA', 'NVDA', 'META', 'XOM', 'CRM', 'MSFT', 'ONON', 'AMZN', 'JPM'])]
 df = df[['name', 'ticker', 'industryName', 'sectorName']]
+df = df.rename(columns={
+    'name': 'Name',
+    'ticker': 'Ticker',
+    'industryName': 'Industry Name',
+    'sectorName': 'Sector Name'
+})
+
 st.dataframe(df.head(15), use_container_width=True)
 
 # Footer
 st.markdown("---")
-st.info("🔧 Developed for the Automated Trading System Project")
+st.info("Developed by Hottest Group LLM")
