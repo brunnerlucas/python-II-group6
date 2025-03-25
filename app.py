@@ -79,33 +79,48 @@ if st.button("Go to Prediction"):
 st.markdown("---")
 st.markdown("### 🔥 Top 10 Hottest Stocks Today")
 
-# Scrape Yahoo Finance gainers table
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
 try:
+    # Set headers to mimic a browser
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
     }
     url = "https://finance.yahoo.com/gainers"
     response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.content, "html.parser")
+    soup = BeautifulSoup(response.text, "html.parser")
 
-    # Get table from page
-    tables = pd.read_html(StringIO(str(soup)))
-    top_gainers = tables[0].head(10)
+    # Find the table rows
+    table = soup.find("table")
+    rows = table.find("tbody").find_all("tr")
 
-    # Clean columns
-    top_gainers = top_gainers.rename(columns=lambda x: x.strip())
-    percent_column = [col for col in top_gainers.columns if '%' in col][0]
-    name_column = [col for col in top_gainers.columns if 'Name' in col][0]
+    # Extract data
+    data = []
+    for row in rows[:10]:
+        cols = row.find_all("td")
+        symbol = cols[0].text.strip()
+        name = cols[1].text.strip()
+        change_pct = cols[4].text.strip()
+        data.append({
+            "Name": name,
+            "Ticker": symbol,
+            "Change %": change_pct
+        })
 
-    # Final table
-    final_df = top_gainers[[name_column, 'Symbol', percent_column]]
-    final_df.columns = ['Name', 'Ticker', 'Change %']
+    # Create DataFrame and sort by % change
+    df = pd.DataFrame(data)
+    df['Change %'] = df['Change %'].str.replace('%', '').str.replace('+', '').astype(float)
+    df = df.sort_values(by='Change %', ascending=False)
+    df['Change %'] = df['Change %'].map(lambda x: f"+{x:.2f}%")
 
-    st.dataframe(final_df, use_container_width=True)
+    st.dataframe(df, use_container_width=True)
 
 except Exception as e:
-    st.error("❌ Could not fetch or parse Yahoo Finance data.")
+    st.error("❌ Could not fetch Yahoo Finance data.")
     st.exception(e)
+
 
 
 # Footer
