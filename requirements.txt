@@ -7,4 +7,3 @@ requests
 yfinance
 scikit-learn
 xgboost
-beautifulsoup4
