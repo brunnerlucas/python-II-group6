@@ -7,4 +7,4 @@ requests
 yfinance
 scikit-learn
 xgboost
-lxml
+beautifulsoup4
