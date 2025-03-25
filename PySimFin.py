@@ -281,7 +281,7 @@ class PySimFin:
                 if qty > 0:
                     cash -= cost
                     shares += qty
-                    action = f"Bought {qty} shares at ${today_close:.2f} on {today.date()} (predicted ${predicted_close:.2f})"
+                    action = f"Bought {qty} shares at \${today_close:.2f} on {today.date()} (predicted \${predicted_close:.2f})"
 
             # 🔴 Sell condition
             elif (tomorrow_close - today_close) / today_close < -sell_threshold:
@@ -290,7 +290,7 @@ class PySimFin:
                 if qty > 0:
                     cash += revenue
                     shares -= qty
-                    action = f"Sold {qty} shares at ${tomorrow_close:.2f} on {tomorrow.date()} (drop after ${today_close:.2f})"
+                    action = f"Sold {qty} shares at \${tomorrow_close:.2f} on {tomorrow.date()} (drop after \${today_close:.2f})"
 
             # Track capital
             total_value = cash + (shares * tomorrow_close)
