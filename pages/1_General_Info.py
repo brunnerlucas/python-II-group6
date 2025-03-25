@@ -11,7 +11,7 @@ ticker = st.text_input("Enter Stock Ticker (e.g., AAPL)", value="AAPL")
 
 if st.button("Get Company Info"):
     df = api.get_general_data(ticker)
-
+    df_similar = api.companies()
     if not df.empty:
         company_name = df['name'].iloc[0]
         st.subheader(f"Company: {company_name}")
@@ -51,5 +51,8 @@ if st.button("Get Company Info"):
         st.write(df['sectorName'].iloc[0])
         st.subheader("Employees:")
         st.write(f"{df['numEmployees'].iloc[0]:,}")
+        st.subheader("Similar Companies:")
+        similar_companies = df_similar[df_similar['sectorCode'] == df['sectorCode'].iloc[0]]['name'].sample(5).tolist()
+        st.write(", ".join(similar_companies))
     else:
         st.warning("No company information found.")
