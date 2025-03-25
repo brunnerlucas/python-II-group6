@@ -22,7 +22,7 @@ df = api.companies()
 
 df.dropna(inplace=True)
 
-df = df[['name', 'ticker', 'industryName','sectorName']]
+df = df[df['ticker'].isin(['TSLA','NVDA','META', 'XOM', 'CRM', 'MSFT', 'ONON', 'AMZN', 'JPM'])][['name', 'ticker', 'industryName', 'sectorName']]
 
 st.dataframe(df.head(15))
 
