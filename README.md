@@ -107,7 +107,7 @@ The user interface is divided into five pages:
 To launch the app:
 
 ```bash
-streamlit run streamlit_app.py
+streamlit run app.py
 
 
 
