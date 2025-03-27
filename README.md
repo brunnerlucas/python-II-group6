@@ -49,7 +49,6 @@ Most of the ETL (Extract, Transform, Load) process is handled via the SimFin API
 
  Data Selection & Filtering
 
-- Only selected stock tickers are used  
 - Training period is reduced to focus on relevant dates  
 
  Feature Engineering
@@ -83,23 +82,23 @@ Streamlit Dashboard
 
 The user interface is divided into five pages:
 
- 1. Opening Page  
+App Page  
 - Overview of app functionality  
 - (Previously included Hot Stocks from Yahoo Finance, later removed)
 
- 2. General Information Page  
+ 1. General Information Page  
 - Displays company details, industry, and similar stocks  
 - Includes company logo for visual reference  
 
-3. Share Prices Page  
+2. Share Prices Page  
 - Plots selected stocks’ historical prices  
 - Allows single or comparative view  
 
-4. Financial Statements Page  
+3. Financial Statements Page  
 - Visualizes annual or quarterly income statements  
 - Graphs revenue vs. net income (single or comparative)  
 
-5. Prediction and Recommendation Page  
+4. Prediction and Recommendation Page  
 - Runs or loads XGBoost model for selected stock  
 - Shows price forecast with historical context  
 - Provides trading recommendations with detailed return metrics  
