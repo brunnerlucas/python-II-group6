@@ -108,6 +108,6 @@ To launch the app:
 
 ```bash
 streamlit run streamlit_app.py
-```bash
+
 
 
