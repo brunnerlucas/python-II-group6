@@ -4,11 +4,12 @@ from datetime import datetime
 from PySimFin import PySimFin
 import plotly.graph_objects as go
 
-api = PySimFin()
+api = PySimFin() 
 
 
-# Input section
+# Input section for ticker
 ticker = st.text_input("Enter stock ticker (e.g., AAPL):", "AAPL")
+
 
 # Start and End Date Pickers
 col1, col2 = st.columns(2)
@@ -18,33 +19,36 @@ with col2:
     end_date = st.date_input("End date (last day for training):", datetime.today())
 
 
-
+#handling the end date is later then the start
 if start_date >= end_date:
     st.error("Start date must be earlier than end date.")
 elif st.button("Predict Next Close Price"):
+    
+    #Prompt: Load and preprocess data for get share price function
     start_str = start_date.strftime('%Y-%m-%d')
     end_str = end_date.strftime('%Y-%m-%d')
 
     #getting the data for the prediction
     df = api.get_share_prices(ticker, start=start_str, end=end_str)
 
-
+    #handling empty data
     if df.empty:
         st.warning("No data found for this ticker.")
         st.stop()
 
 
     # Normalize and prepare columns
+    #prompt: how can I normalized tge columns because the Closed column is Adjusted Closing Price in the respose from the API
     df.columns = [col.strip().title() for col in df.columns]
     df['Date'] = pd.to_datetime(df['Date'])
     if 'Adjusted Closing Price' in df.columns:
         df = df.rename(columns={'Adjusted Closing Price': 'Close'})
     if 'Ticker' not in df.columns:
         df['Ticker'] = ticker
+    
 
-
+    #Run XGBoost model training or load model
     last_date = df['Date'].max()
-
     try:
         prediction_df = api.train_xgboost_model(df, last_date)
     except ValueError as e:
@@ -57,9 +61,9 @@ elif st.button("Predict Next Close Price"):
     next_day_str = next_day.strftime('%Y-%m-%d')
 
     # Fetch actual close for the prediction day
+    #prompt: how can fetch the actual close price if I run a prediction
     actual_row = api.get_share_prices(ticker, start=next_day_str, end=next_day_str)
     actual_price = None
-
     if not actual_row.empty:
         actual_row.columns = [col.strip().title() for col in actual_row.columns]
 
@@ -76,7 +80,6 @@ elif st.button("Predict Next Close Price"):
     # Show results
     st.subheader(f"Prediction for {ticker} on {next_day.date()}:")
     st.dataframe(prediction_df)
-
 
 
     # Plot chart
@@ -101,7 +104,8 @@ elif st.button("Predict Next Close Price"):
         st.metric("💰 Final Capital", f"${final_capital:.2f}")
         st.metric("📈 Total Return", f"${final_capital - 10000:.2f}")
 
-        # Strategy Explanation
+        # Strategy Explanation¨
+        # prompt: give me realistic trading strategy we can apply on our model
         with st.expander("📖 Strategy Explanation"):
             st.markdown(f"""
             **Strategy Overview:**
@@ -114,7 +118,7 @@ elif st.button("Predict Next Close Price"):
 
             ---
             """)
-
+            #trade logs
             st.markdown("**📋 Trade Log:**")
             if trade_log:
                 for log in trade_log:
@@ -122,3 +126,5 @@ elif st.button("Predict Next Close Price"):
             else:
                 st.markdown("_No trades were triggered in this period._")
 
+# This code has been refactored with the assistance of ChatGPT to enhance structure,
+# modularity, and adherence to clean coding principles.
